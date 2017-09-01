@@ -63,7 +63,7 @@ def getYesterday(date):
 
 # 根据topic获取topic_id
 def getTopicId(topic):
-    topicId = 0
+    topic_id = 0
     mysql_db = MySQLdb.connect(MYSQL_CONFIG['host'],
                                MYSQL_CONFIG['username'],
                                MYSQL_CONFIG['password'],
@@ -72,14 +72,14 @@ def getTopicId(topic):
     sql = "SELECT * FROM topic WHERE table_name = '%s' " % (topic)
     try:
         cursor.execute(sql)
-        onetopic = cursor.fetchone()
-        topicId = onetopic[0]
+        one_topic = cursor.fetchone()
+        topic_id = one_topic[0]
     except Exception as e:
         log.error("Error: unable to fecth data")
         log.exception(e)
 
     mysql_db.close()
-    return topicId
+    return topic_id
 
 
 # 根据topic_id获取主题的所有站点
@@ -109,33 +109,34 @@ def getSitesByTopicId(topicId):
 
 
 # 迭代1和迭代2的主题
-topics1 = ["enterprise_data_gov", "enterprise_owing_tax", "penalty", "patent", "baidu_news",
-           "news", "ssgs_notice_cninfo", "ssgs_baseinfo", "ssgs_caibao_companies_ability",
-           "ssgs_caibao_assets_liabilities",
-           "ssgs_caibao_profit", "judgement_wenshu", "zhixing_info", "shixin_info", "judge_process",
-           "bid_detail", "bulletin", "court_ktgg"]
-topicnames1 = [u"工商信息、变更信息", u"欠税信息", u"行政处罚", u"专利信息", u"百度新闻",
-               u"新闻", u"上市公告", u"上市公司基本信息表", u"上市公司财报-公司综合能力指标", u"上市公司财报-资产负债表",
-               u"上市公司财报-利润表", u"裁判文书", u"执行信息", u"失信信息", u"审判流程",
-               u"招中标信息", u"法院公告", u"开庭公告"]
-topics2 = ["ppp_project", "net_loan_blacklist", "investment_institutions", "investment_funds", "financing_events",
-           "investment_events", "exit_event", "acquirer_event", "listing_events", "land_project_selling",
-           "loupan_lianjia", "ershoufang_lianjia", "xiaoqu_lianjia", "land_selling_auction", "land_auction"]
-topicnames2 = [u"PPP项目库", u"网贷黑名单", u"投资机构", u"投资基金", u"投资基金-融资事件",
-               u"投资基金-投资事件", u"投资基金-退出事件", u"投资基金-并购事件", u"投资基金-上市事件", u"土地转让",
-               u"房地产-新房（链家）深圳市", u"房地产-二手在售房源深圳市", u"房地产-小区（链家）深圳市", u"土地基本信息", u"土地招拍挂"]
+table_name_list1 = ["enterprise_data_gov", "enterprise_owing_tax", "penalty", "patent", "baidu_news",
+                    "news", "ssgs_notice_cninfo", "ssgs_baseinfo", "ssgs_caibao_companies_ability",
+                    "ssgs_caibao_assets_liabilities",
+                    "ssgs_caibao_profit", "judgement_wenshu", "zhixing_info", "shixin_info", "judge_process",
+                    "bid_detail", "bulletin", "court_ktgg"]
+topic_name_list1 = [u"工商信息、变更信息", u"欠税信息", u"行政处罚", u"专利信息", u"百度新闻",
+                    u"新闻", u"上市公告", u"上市公司基本信息表", u"上市公司财报-公司综合能力指标", u"上市公司财报-资产负债表",
+                    u"上市公司财报-利润表", u"裁判文书", u"执行信息", u"失信信息", u"审判流程",
+                    u"招中标信息", u"法院公告", u"开庭公告"]
+table_name_list2 = ["ppp_project", "net_loan_blacklist", "investment_institutions", "investment_funds",
+                    "financing_events",
+                    "investment_events", "exit_event", "acquirer_event", "listing_events", "land_project_selling",
+                    "loupan_lianjia", "ershoufang_lianjia", "xiaoqu_lianjia", "land_selling_auction", "land_auction"]
+topic_name_list2 = [u"PPP项目库", u"网贷黑名单", u"投资机构", u"投资基金", u"投资基金-融资事件",
+                    u"投资基金-投资事件", u"投资基金-退出事件", u"投资基金-并购事件", u"投资基金-上市事件", u"土地转让",
+                    u"房地产-新房（链家）深圳市", u"房地产-二手在售房源深圳市", u"房地产-小区（链家）深圳市", u"土地基本信息", u"土地招拍挂"]
 
-starttimes = []
-endtimes = []
+start_time_list = []
+end_time_list = []
 
 cols = [u"主题", u"站点"]
 cols2 = [u"主题"]
 
 # 合并
-topics = topics1
-topics.extend(topics2)
-topicnames = topicnames1
-topicnames.extend(topicnames2)
+table_name_list = table_name_list1
+table_name_list.extend(table_name_list2)
+topic_name_list = topic_name_list1
+topic_name_list.extend(topic_name_list2)
 
 
 @click.command()
@@ -148,34 +149,34 @@ def main(st, et):
         et = time.strftime("%Y-%m-%d") + " 23:59:59"
     checkDateFormate(st)
     checkDateFormate(et)
-    starttimes.append(st)
-    endtimes.append(et)
+    start_time_list.append(st)
+    end_time_list.append(et)
     cols.append(st + u"至" + getYesterday(et))
     cols.append(u"TAG")
     cols2.append(st + u"至" + getYesterday(et))
 
-    col_nums = len(starttimes)
+    col_nums = len(start_time_list)
     batch = []
     batch2 = []
 
     log.info("开始启动统计..")
     log.info("当前统计的时间段为: {} - {}".format(st, et))
-    for index, topic in enumerate(topics):
+    for index, table_name in enumerate(table_name_list):
 
-        log.info("当前统计的topic为: {}".format(topic))
+        log.info("当前统计的topic为: {}".format(table_name))
 
-        collection = mongo_db[topic]
-        if CHECK_TOPIC.has_key(topic):
-            sites = CHECK_TOPIC[topic]["sites"]
+        collection = mongo_db[table_name]
+        if CHECK_TOPIC.has_key(table_name):
+            sites = CHECK_TOPIC[table_name]["sites"]
         else:
             sites = []
-            sites_strs = getSitesByTopicId(getTopicId(topic))
+            sites_strs = getSitesByTopicId(getTopicId(table_name))
             for ss in sites_strs:
                 sites.append({"site": ss})
 
         maps = []
         for i in range(col_nums):
-            cursor = collection.find({'_utime': {'$gte': starttimes[i], '$lte': endtimes[i]}},
+            cursor = collection.find({'_utime': {'$gte': start_time_list[i], '$lte': end_time_list[i]}},
                                      ['_src'],
                                      no_cursor_timeout=True)
             # 站点与统计量的映射
@@ -187,7 +188,7 @@ def main(st, et):
             maps.append(site_count_map)
 
         for site in sites:
-            tmp = {u"主题": topicnames[index] + topic, u"站点": site["site"]}
+            tmp = {u"主题": topic_name_list[index] + table_name, u"站点": site["site"]}
             for i in range(col_nums):
 
                 tmp[u"TAG"] = ""  # site.get("tag", "")
@@ -200,17 +201,17 @@ def main(st, et):
                 for key, value in maps[i].items():
                     if key in site['site'] or site['site'] in key:
                         tmp[cols[i + 2]] = value
-                        log.info('in 操作找到站点信息: {} {}'.format(topicnames[index] + topic, site['site']))
+                        log.info('in 操作找到站点信息: {} {}'.format(topic_name_list[index] + table_name, site['site']))
                         break
 
                 if tmp[cols[i + 2]] == -1:
                     tmp[cols[i + 2]] = 0
-                    log.warn('当前站点没有找到数据信息: {} {}'.format(topicnames[index] + topic, site['site']))
+                    log.warn('当前站点没有找到数据信息: {} {}'.format(topic_name_list[index] + table_name, site['site']))
 
             batch.append(tmp)
 
         # 计算总量
-        tmp2 = {u"主题": topicnames[index] + topic}
+        tmp2 = {u"主题": topic_name_list[index] + table_name}
         count = 0
         for i in range(col_nums):
             for site in sites:
