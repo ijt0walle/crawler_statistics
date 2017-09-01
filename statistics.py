@@ -197,33 +197,33 @@ def main(st, et):
         # maps.append(site_count_map)
         cursor.close()
 
-        for site in site_list:
-            tmp = {u"主题": topic_name_list[index] + table_name, u"站点": site["site"], u"TAG": ""}
+        for site_item in site_list:
+            site_tmp = {u"主题": topic_name_list[index] + table_name, u"站点": site_item["site"], u"TAG": ""}
 
-            site_num = site_count_map.get(site["site"])
+            site_num = site_count_map.get(site_item["site"])
             if site_num is not None:
-                tmp[cols[2]] = site_num
+                site_tmp[cols[2]] = site_num
                 continue
 
-            tmp[cols[2]] = -1
+            site_tmp[cols[2]] = -1
             for key, value in site_count_map.items():
-                if key in site['site'] or site['site'] in key:
-                    tmp[cols[2]] = value
-                    log.info('in 操作找到站点信息: {} {}'.format(topic_name_list[index] + table_name, site['site']))
+                if key in site_item['site'] or site_item['site'] in key:
+                    site_tmp[cols[2]] = value
+                    log.info('in 操作找到站点信息: {} {}'.format(topic_name_list[index] + table_name, site_item['site']))
                     break
 
-            if tmp[cols[2]] == -1:
-                tmp[cols[2]] = 0
-                log.warn('当前站点没有找到数据信息: {} {}'.format(topic_name_list[index] + table_name, site['site']))
+            if site_tmp[cols[2]] == -1:
+                site_tmp[cols[2]] = 0
+                log.warn('当前站点没有找到数据信息: {} {}'.format(topic_name_list[index] + table_name, site_item['site']))
 
-            batch.append(tmp)
+            batch.append(site_tmp)
 
         # 计算总量
         tmp2 = {u"主题": topic_name_list[index] + table_name}
         count = 0
 
-        for site in site_list:
-            count += site_count_map.get(site["site"], 0)
+        for site_item in site_list:
+            count += site_count_map.get(site_item["site"], 0)
         tmp2[cols2[1]] = count
         batch2.append(tmp2)
 
