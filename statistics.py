@@ -126,8 +126,8 @@ topic_name_list2 = [u"PPP项目库", u"网贷黑名单", u"投资机构", u"投�
                     u"投资基金-投资事件", u"投资基金-退出事件", u"投资基金-并购事件", u"投资基金-上市事件", u"土地转让",
                     u"房地产-新房（链家）深圳市", u"房地产-二手在售房源深圳市", u"房地产-小区（链家）深圳市", u"土地基本信息", u"土地招拍挂"]
 
-cols = [u"主题", u"站点"]
-cols2 = [u"主题"]
+sheet_one_col_list = [u"主题", u"站点"]
+sheet_two_col_list = [u"主题"]
 
 # 合并
 table_name_list = table_name_list1
@@ -148,11 +148,8 @@ def main():
     start_time = start_date + " 00:00:00"
     end_time = end_date + " 23:59:59"
 
-    check_date_formate(start_time)
-    check_date_formate(end_time)
-    cols.append(start_time + u"至" + end_time)
-    cols.append(u"TAG")
-    cols2.append(start_time + u"至" + end_time)
+    sheet_one_col_list.append(start_time + u"至" + end_time)
+    sheet_two_col_list.append(start_time + u"至" + end_time)
 
     sheet_one_list = []
     sheet_two_list = []
@@ -200,18 +197,18 @@ def main():
 
             site_num = site_count_map.get(site_info)
             if site_num is not None:
-                site_tmp[cols[2]] = site_num
+                site_tmp[sheet_one_col_list[2]] = site_num
                 continue
 
-            site_tmp[cols[2]] = -1
+            site_tmp[sheet_one_col_list[2]] = -1
             for key, value in site_count_map.items():
                 if key in site_info or site_info in key:
-                    site_tmp[cols[2]] = value
+                    site_tmp[sheet_one_col_list[2]] = value
                     log.info('in 操作找到站点信息: {} {}'.format(topic_name_list[index] + table_name, site_info))
                     break
 
-            if site_tmp[cols[2]] == -1:
-                site_tmp[cols[2]] = 0
+            if site_tmp[sheet_one_col_list[2]] == -1:
+                site_tmp[sheet_one_col_list[2]] = 0
                 log.warn('当前站点没有找到数据信息: {} {}'.format(topic_name_list[index] + table_name, site_info))
 
             sheet_one_list.append(site_tmp)
@@ -222,11 +219,11 @@ def main():
 
         for site_item in site_list:
             count += site_count_map.get(site_item['site'], 0)
-        sheet_two_tmp[cols2[1]] = count
+        sheet_two_tmp[sheet_two_col_list[1]] = count
         sheet_two_list.append(sheet_two_tmp)
 
-    df = pd.DataFrame(sheet_one_list, columns=cols)
-    df2 = pd.DataFrame(sheet_two_list, columns=cols2)
+    df = pd.DataFrame(sheet_one_list, columns=sheet_one_col_list)
+    df2 = pd.DataFrame(sheet_two_list, columns=sheet_two_col_list)
     with pd.ExcelWriter("{st}_{et}_utime_sites_statistics.xls".format(st=start_date, et=end_date)) as writer:
         df.to_excel(writer, index=False)
         df2.to_excel(writer, sheet_name="sheet2", index=False)
