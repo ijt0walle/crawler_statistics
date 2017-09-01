@@ -39,6 +39,8 @@ MYSQL_CONFIG = {
     'db': 'cmb_crawl',
 }
 
+CHECK_DATES = 7
+
 CHECK_TOPIC = {
     "enterprise_data_gov": {"description": "工商信息变更", "tag": u"离线抓取", "sites": [
         {"site": "bj.gsxt.gov.cn"}, {"site": "tj.gsxt.gov.cn"}, {"site": "he.gsxt.gov.cn"}, {"site": "sx.gsxt.gov.cn"},

@@ -13,7 +13,7 @@ import MySQLdb
 import pandas as pd
 import pymongo
 
-from config import CHECK_TOPIC, MONGO_CONFIG, MYSQL_CONFIG
+from config import CHECK_TOPIC, MONGO_CONFIG, MYSQL_CONFIG, CHECK_DATES
 from logger import Logger
 
 log = Logger("statistics.log").get_logger()
@@ -142,24 +142,17 @@ topic_name_list.extend(topic_name_list2)
 def main():
     # 只要有一个日期为""，则st为当前日期的七天之前的日期，et为当天日期
 
-    start_date = get_delta_date(7)
+    start_date = get_delta_date(CHECK_DATES)
     end_date = time.strftime("%Y-%m-%d")
 
     start_time = start_date + " 00:00:00"
     end_time = end_date + " 23:59:59"
 
-    # if st == "" or et == "":
-    #     start_time = start_date + " 00:00:00"
-    #     end_time = end_date + " 23:59:59"
-    # else:
-    #     start_time = st
-    #     end_time = et
-
     check_date_formate(start_time)
     check_date_formate(end_time)
-    cols.append(start_time + u"至" + get_yesterday(end_time))
+    cols.append(start_time + u"至" + end_time)
     cols.append(u"TAG")
-    cols2.append(start_time + u"至" + get_yesterday(end_time))
+    cols2.append(start_time + u"至" + end_time)
 
     sheet_one_list = []
     sheet_two_list = []
@@ -176,8 +169,8 @@ def main():
             site_list = CHECK_TOPIC[table_name]["sites"]
         else:
             site_list = []
-            sites_str = get_sites_by_topic_id(get_topic_id(table_name))
-            for ss in sites_str:
+            sites_str_list = get_sites_by_topic_id(get_topic_id(table_name))
+            for ss in sites_str_list:
                 site_list.append({"site": ss})
 
         cursor = collection.find({'_utime': {'$gte': start_time, '$lte': end_time}},
@@ -193,8 +186,7 @@ def main():
             else:
                 _id = item.pop('_id')
                 log.warn("当前数据_src不符合条件:  {} {} {}".format(
-                    topic_name_list[index] + table_name,
-                    _id,
+                    topic_name_list[index] + table_name, _id,
                     json.dumps(item, ensure_ascii=False)))
             if count % 1000 == 0:
                 log.info("当前进度: {} {}".format(table_name, count))
@@ -203,23 +195,24 @@ def main():
         cursor.close()
 
         for site_item in site_list:
-            site_tmp = {u"主题": topic_name_list[index] + table_name, u"站点": site_item["site"], u"TAG": ""}
+            site_info = site_item['site']
+            site_tmp = {u"主题": topic_name_list[index] + table_name, u"站点": site_info, u"TAG": ""}
 
-            site_num = site_count_map.get(site_item["site"])
+            site_num = site_count_map.get(site_info)
             if site_num is not None:
                 site_tmp[cols[2]] = site_num
                 continue
 
             site_tmp[cols[2]] = -1
             for key, value in site_count_map.items():
-                if key in site_item['site'] or site_item['site'] in key:
+                if key in site_info or site_info in key:
                     site_tmp[cols[2]] = value
-                    log.info('in 操作找到站点信息: {} {}'.format(topic_name_list[index] + table_name, site_item['site']))
+                    log.info('in 操作找到站点信息: {} {}'.format(topic_name_list[index] + table_name, site_info))
                     break
 
             if site_tmp[cols[2]] == -1:
                 site_tmp[cols[2]] = 0
-                log.warn('当前站点没有找到数据信息: {} {}'.format(topic_name_list[index] + table_name, site_item['site']))
+                log.warn('当前站点没有找到数据信息: {} {}'.format(topic_name_list[index] + table_name, site_info))
 
             sheet_one_list.append(site_tmp)
 
@@ -228,7 +221,7 @@ def main():
         count = 0
 
         for site_item in site_list:
-            count += site_count_map.get(site_item["site"], 0)
+            count += site_count_map.get(site_item['site'], 0)
         sheet_two_tmp[cols2[1]] = count
         sheet_two_list.append(sheet_two_tmp)
 
