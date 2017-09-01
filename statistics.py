@@ -161,8 +161,8 @@ def main():
     cols.append(u"TAG")
     cols2.append(start_time + u"至" + get_yesterday(end_time))
 
-    batch = []
-    batch2 = []
+    sheet_one_list = []
+    sheet_two_list = []
 
     log.info("开始启动统计..")
     log.info("当前统计的时间段为: {} - {}".format(start_time, end_time))
@@ -221,19 +221,19 @@ def main():
                 site_tmp[cols[2]] = 0
                 log.warn('当前站点没有找到数据信息: {} {}'.format(topic_name_list[index] + table_name, site_item['site']))
 
-            batch.append(site_tmp)
+            sheet_one_list.append(site_tmp)
 
         # 计算总量
-        tmp2 = {u"主题": topic_name_list[index] + table_name}
+        sheet_two_tmp = {u"主题": topic_name_list[index] + table_name}
         count = 0
 
         for site_item in site_list:
             count += site_count_map.get(site_item["site"], 0)
-        tmp2[cols2[1]] = count
-        batch2.append(tmp2)
+        sheet_two_tmp[cols2[1]] = count
+        sheet_two_list.append(sheet_two_tmp)
 
-    df = pd.DataFrame(batch[:65000], columns=cols)
-    df2 = pd.DataFrame(batch2[:65000], columns=cols2)
+    df = pd.DataFrame(sheet_one_list, columns=cols)
+    df2 = pd.DataFrame(sheet_two_list, columns=cols2)
     with pd.ExcelWriter("{st}_{et}_utime_sites_statistics.xls".format(st=start_date, et=end_date)) as writer:
         df.to_excel(writer, index=False)
         df2.to_excel(writer, sheet_name="sheet2", index=False)
