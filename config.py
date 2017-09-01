@@ -23,7 +23,7 @@ MONGO_CONFIG = {
     'password': 'haizhi'
 }
 
-CHECK_DATES = 7
+CHECK_DATES = 6
 
 CHECK_TOPIC = {
     "enterprise_data_gov": {"description": "工商信息变更", "tag": u"离线抓取", "sites": [

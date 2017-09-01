@@ -101,11 +101,11 @@ def main():
                 log.info("当前进度: {} {}".format(table_name, count))
 
         log.info("总数据量: {} {}".format(table_name, count))
-
         cursor.close()
 
         total_count = 0
-        for _site, site_count in site_count_map.iteritems():
+        sort_count_list = sorted(site_count_map.items(), key=lambda it: it[0])
+        for _site, site_count in sort_count_list:
             total_count += site_count
             item = {u"主题": topic_name_list[index] + table_name,
                     u"站点": _site,
