@@ -188,8 +188,10 @@ def main(st, et):
                 cur_site = item["_src"][0]["site"].strip()
                 site_count_map[cur_site] = site_count_map[cur_site] + 1 if site_count_map.has_key(cur_site) else 1
             else:
-                log.warn("当前数据_src不符合条件:  {} {}".format(
+                _id = item.pop('_id')
+                log.warn("当前数据_src不符合条件:  {} {} {}".format(
                     topic_name_list[index] + table_name,
+                    _id,
                     json.dumps(item, ensure_ascii=False)))
             if count % 1000 == 0:
                 log.info("当前进度: {} {}".format(table_name, count))
