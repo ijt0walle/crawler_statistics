@@ -13,6 +13,17 @@ start() {
     echo "${project} start success..."
 }
 
+all() {
+	status
+	if [ ! $? -eq 0 ]; then
+		echo "${project} is already running.."
+		return 1
+	fi
+
+    nohup python ${project}.py -w all > /dev/null 2>&1 &
+    echo "${project} start success..."
+}
+
 stop() {
 	ret=`status`
 	if [ -z "${ret}" ]; then
@@ -45,10 +56,10 @@ status() {
 }
 
 case "$1" in
-	start|stop|restart|status)
+	all|start|stop|restart|status)
   		$1
 		;;
 	*)
-		echo $"Usage: $0 {start|stop|status|restart}"
+		echo $"Usage: $0 {all|start|stop|status|restart}"
 		exit 1
 esac
