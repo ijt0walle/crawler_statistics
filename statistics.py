@@ -113,6 +113,7 @@ def get_sites_by_topic_id(topic_id):
 def get_all_site_info():
     all_site_dict = {}
 
+    total_site = 0
     for table_name in table_name_list:
 
         all_site_dict[table_name] = set()
@@ -126,6 +127,7 @@ def get_all_site_info():
                 all_site_dict[table_name].add(ss)
             log.info("数据库中加载数目为: {} {} {}".format(
                 table_name, len(sites_str_list), sites_str_list))
+            total_site += len(all_site_dict[table_name])
             continue
 
         table_dict = CHECK_TOPIC.get(table_name)
@@ -136,11 +138,13 @@ def get_all_site_info():
             assert site is not None
             all_site_dict[table_name].add(site)
 
-            # 一定没有重复的站点
-            # if len(all_site_dict[table_name]) != len(site_list):
-            #     log.info("去重后: {} --- 去重前: {}".format(len(all_site_dict[table_name]), len(site_list)))
-            #     raise Exception("当前表中的站点有重复: {}".format(table_name))
+        total_site += len(all_site_dict[table_name])
+        # 一定没有重复的站点
+        # if len(all_site_dict[table_name]) != len(site_list):
+        #     log.info("去重后: {} --- 去重前: {}".format(len(all_site_dict[table_name]), len(site_list)))
+        #     raise Exception("当前表中的站点有重复: {}".format(table_name))
 
+    log.info("招行关注站点总数目: {}".format(total_site))
     log.info(all_site_dict)
     return all_site_dict
 
