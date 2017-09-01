@@ -159,6 +159,7 @@ def main(st, et):
     batch2 = []
 
     log.info("开始启动统计..")
+    log.info("当前统计的时间段为: {} - {}".format(st, et))
     for index, topic in enumerate(topics):
 
         log.info("当前统计的topic为: {}".format(topic))
