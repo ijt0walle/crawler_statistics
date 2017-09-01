@@ -10,7 +10,6 @@ import re
 import time
 
 import MySQLdb
-import click
 import pandas as pd
 import pymongo
 
@@ -137,20 +136,24 @@ topic_name_list = topic_name_list1
 topic_name_list.extend(topic_name_list2)
 
 
-@click.command()
-@click.option("-s", "--st", default="", help=u"统计的开始时间")
-@click.option("-e", "--et", default="", help=u"统计的结束时间")
-def main(st, et):
+# @click.command()
+# @click.option("-s", "--st", default="", help=u"统计的开始时间")
+# @click.option("-e", "--et", default="", help=u"统计的结束时间")
+def main():
     # 只要有一个日期为""，则st为当前日期的七天之前的日期，et为当天日期
 
     start_date = getDeltaDate(7)
     end_date = time.strftime("%Y-%m-%d")
-    if st == "" or et == "":
-        start_time = start_date + " 00:00:00"
-        end_time = end_date + " 23:59:59"
-    else:
-        start_time = st
-        end_time = et
+
+    start_time = start_date + " 00:00:00"
+    end_time = end_date + " 23:59:59"
+
+    # if st == "" or et == "":
+    #     start_time = start_date + " 00:00:00"
+    #     end_time = end_date + " 23:59:59"
+    # else:
+    #     start_time = st
+    #     end_time = et
 
     checkDateFormate(start_time)
     checkDateFormate(end_time)
