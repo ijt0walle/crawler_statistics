@@ -8,6 +8,7 @@ import datetime
 import json
 import time
 
+import click
 import pandas as pd
 import pymongo
 
@@ -61,30 +62,46 @@ topic_name_list = topic_name_list1
 topic_name_list.extend(topic_name_list2)
 
 
-def main():
+@click.command()
+@click.option("-w", "--whole", default="", help=u"全量统计")
+def main(whole):
+    log.info("开始启动统计..")
+
+    sheet_one_list = []
+    sheet_two_list = []
+
     start_date = get_delta_date(CHECK_DATES)
     end_date = time.strftime("%Y-%m-%d")
 
     start_time = start_date + " 00:00:00"
     end_time = end_date + " 23:59:59"
 
-    sheet_one_col_list.append(start_time + u"至" + end_time)
-    sheet_two_col_list.append(start_time + u"至" + end_time)
+    is_all = False
+    if whole == 'all':
+        is_all = True
 
-    sheet_one_list = []
-    sheet_two_list = []
+    if is_all is False:
+        sheet_one_col_list.append(start_time + u"至" + end_time)
+        sheet_two_col_list.append(start_time + u"至" + end_time)
+        log.info("当前统计的时间段为: {} - {}".format(start_time, end_time))
+    else:
+        sheet_one_col_list.append(u"全量统计")
+        sheet_two_col_list.append(u"全量统计")
+        log.info("当前为全量统计...")
 
-    log.info("开始启动统计..")
-    log.info("当前统计的时间段为: {} - {}".format(start_time, end_time))
     for index, table_name in enumerate(table_name_list):
 
         count = 0
         log.info("当前统计的topic为: {}".format(table_name))
 
         collection = mongo_db[table_name]
-        cursor = collection.find({'_utime': {'$gte': start_time, '$lte': end_time}},
-                                 ['_src'],
-                                 no_cursor_timeout=True).batch_size(1000)
+        if is_all is False:
+            cursor = collection.find({'_utime': {'$gte': start_time, '$lte': end_time}},
+                                     ['_src'],
+                                     no_cursor_timeout=True).batch_size(1000)
+        else:
+            cursor = collection.find({}, ['_src'], no_cursor_timeout=True).batch_size(1000)
+
         # 站点与统计量的映射
         site_count_map = {}
         for item in cursor:
