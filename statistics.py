@@ -100,6 +100,8 @@ def main():
             if count % 1000 == 0:
                 log.info("当前进度: {} {}".format(table_name, count))
 
+        log.info("总数据量: {} {}".format(table_name, count))
+
         cursor.close()
 
         total_count = 0
