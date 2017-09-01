@@ -178,7 +178,7 @@ def main(st, et):
         for i in range(col_nums):
             cursor = collection.find({'_utime': {'$gte': start_time_list[i], '$lte': end_time_list[i]}},
                                      ['_src'],
-                                     no_cursor_timeout=True)
+                                     no_cursor_timeout=True).batch_size(1000)
             # 站点与统计量的映射
             site_count_map = {}
             for item in cursor:
