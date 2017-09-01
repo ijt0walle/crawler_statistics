@@ -8,11 +8,12 @@ import datetime
 import json
 import time
 
+import MySQLdb
 import click
 import pandas as pd
 import pymongo
 
-from config import MONGO_CONFIG, CHECK_DATES
+from config import MONGO_CONFIG, CHECK_DATES, CHECK_TOPIC, MYSQL_CONFIG
 from logger import Logger
 
 log = Logger("statistics.log").get_logger()
@@ -21,6 +22,12 @@ log = Logger("statistics.log").get_logger()
 client = pymongo.MongoClient(MONGO_CONFIG['host'], MONGO_CONFIG['port'])
 mongo_db = client[MONGO_CONFIG['db']]
 mongo_db.authenticate(MONGO_CONFIG['username'], MONGO_CONFIG['password'])
+
+# mysql 初始化
+mysql_db = MySQLdb.connect(MYSQL_CONFIG['host'],
+                           MYSQL_CONFIG['username'],
+                           MYSQL_CONFIG['password'],
+                           MYSQL_CONFIG['db'], charset="utf8")
 
 """
 获取当天的delta天之前的日期
@@ -62,6 +69,82 @@ topic_name_list = topic_name_list1
 topic_name_list.extend(topic_name_list2)
 
 
+# 根据topic获取topic_id
+def get_topic_id(topic):
+    topic_id = 0
+
+    cursor = mysql_db.cursor()
+    sql = "SELECT * FROM topic WHERE table_name = '%s' " % (topic)
+    try:
+        cursor.execute(sql)
+        one_topic = cursor.fetchone()
+        topic_id = one_topic[0]
+    except Exception as e:
+        log.error("Error: unable to fecth data")
+        log.exception(e)
+
+    cursor.close()
+    return topic_id
+
+
+# 根据topic_id获取主题的所有站点
+def get_sites_by_topic_id(topic_id):
+    res = []
+    cursor = mysql_db.cursor()
+    sql = "SELECT * FROM site"
+    try:
+        cursor.execute(sql)
+        rows = cursor.fetchall()
+        # 遍历sites
+        for row in rows:
+            label = row[10]
+            site = row[7]
+            topic_ids = label.split(",") if label else []
+            if str(topic_id) in topic_ids:
+                res.append(site)
+    except Exception as e:
+        log.error("Error: unable to fecth data")
+        log.exception(e)
+    cursor.close()
+    return res
+
+
+# 获得配置文件中所有站点信息
+def get_all_site_info():
+    all_site_dict = {}
+
+    for table_name in table_name_list:
+
+        all_site_dict[table_name] = set()
+
+        # assert table_name in CHECK_TOPIC
+        if table_name not in CHECK_TOPIC:
+            log.info("表信息没有在配置文件中: {} 从数据库中进行加载...".format(table_name))
+            sites_str_list = get_sites_by_topic_id(get_topic_id(table_name))
+            for ss in sites_str_list:
+                # site_list.append({"site": ss})
+                all_site_dict[table_name].add(ss)
+            log.info("数据库中加载数目为: {} {} {}".format(
+                table_name, len(sites_str_list), sites_str_list))
+            continue
+
+        table_dict = CHECK_TOPIC.get(table_name)
+        site_list = table_dict.get('sites')
+        assert site_list is not None
+        for site_dict in site_list:
+            site = site_dict.get('site')
+            assert site is not None
+            all_site_dict[table_name].add(site)
+
+            # 一定没有重复的站点
+            # if len(all_site_dict[table_name]) != len(site_list):
+            #     log.info("去重后: {} --- 去重前: {}".format(len(all_site_dict[table_name]), len(site_list)))
+            #     raise Exception("当前表中的站点有重复: {}".format(table_name))
+
+    log.info(all_site_dict)
+    return all_site_dict
+
+
 @click.command()
 @click.option("-w", "--whole", default="", help=u"全量统计")
 def main(whole):
@@ -88,6 +171,9 @@ def main(whole):
         sheet_one_col_list.append(u"全量统计")
         sheet_two_col_list.append(u"全量统计")
         log.info("当前为全量统计...")
+
+    # 获得所有站点信息
+    all_site_dict = get_all_site_info()
 
     for index, table_name in enumerate(table_name_list):
 
@@ -120,6 +206,14 @@ def main(whole):
         log.info("总数据量: {} {}".format(table_name, count))
         cursor.close()
 
+        # 添加招行站点
+        site_set = all_site_dict.get(table_name)
+        assert site_set is not None
+        for key in site_set:
+            if key in site_count_map:
+                continue
+            site_count_map[key] = 0
+
         total_count = 0
         sort_count_list = sorted(site_count_map.items(), key=lambda it: it[0])
         for _site, site_count in sort_count_list:
@@ -127,6 +221,12 @@ def main(whole):
             item = {u"主题": topic_name_list[index] + table_name,
                     u"站点": _site,
                     sheet_one_col_list[-1]: site_count}
+
+            if _site in site_set:
+                item[u'招行站点'] = u'是'
+            else:
+                item[u'招行站点'] = u'------'
+
             log.info(json.dumps(item, ensure_ascii=False))
             sheet_one_list.append(item)
 

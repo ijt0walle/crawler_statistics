@@ -23,6 +23,23 @@ MONGO_CONFIG = {
     'password': 'haizhi'
 }
 
+# 招行配置
+# MYSQL_CONFIG = {
+#     'host': '99.240.10.137',
+#     'username': 'work',
+#     'password': 'haizhi@)',
+#     'db': 'cmb_crawl',
+# }
+
+# 海致配置
+MYSQL_CONFIG = {
+    'host': 'rm-wz9x07x9567465305.mysql.rds.aliyuncs.com',
+    'username': 'work',
+    'password': 'haizhi@)3',
+    'db': 'cmb_crawl',
+}
+
+
 CHECK_DATES = 6
 
 CHECK_TOPIC = {
@@ -128,6 +145,9 @@ CHECK_TOPIC = {
     "shixin_info": {"description": "失信被执行人、曝光台", "sites": [
         {"name": "中国执行信息公开网", "site": "shixin.court.gov.cn", },
     ]},
+    # "patent": {"description": "专利", "sites": [
+    #     {"name": "中国专利网", "site": "epub.sipo.gov.cn", },
+    # ]},
     "judgement_wenshu": {"description": "裁判文书", "sites": [
         {"name": "上海市高级人民法院网(裁判文书-离线抓取)", "site": "www.hshfy.sh.cn", "ignore": True, "tag": u"网页反爬"},
         {"name": "南宁法院网", "site": "nnzy.chinacourt.org", "ignore": True, "tag": u"数据不曾更新，且内容为js复杂渲染"},
