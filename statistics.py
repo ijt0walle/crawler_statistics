@@ -6,14 +6,12 @@
 
 import datetime
 import json
-import re
 import time
 
-import MySQLdb
 import pandas as pd
 import pymongo
 
-from config import CHECK_TOPIC, MONGO_CONFIG, MYSQL_CONFIG, CHECK_DATES
+from config import MONGO_CONFIG, CHECK_DATES
 from logger import Logger
 
 log = Logger("statistics.log").get_logger()
@@ -22,25 +20,6 @@ log = Logger("statistics.log").get_logger()
 client = pymongo.MongoClient(MONGO_CONFIG['host'], MONGO_CONFIG['port'])
 mongo_db = client[MONGO_CONFIG['db']]
 mongo_db.authenticate(MONGO_CONFIG['username'], MONGO_CONFIG['password'])
-
-# mysql 初始化
-mysql_db = MySQLdb.connect(MYSQL_CONFIG['host'],
-                           MYSQL_CONFIG['username'],
-                           MYSQL_CONFIG['password'],
-                           MYSQL_CONFIG['db'], charset="utf8")
-
-"""
-验证日期格式是否是形如xxxx-xx-xx的形式
-如果不是，则抛出异常
-"""
-
-
-def check_date_formate(date):
-    p = re.compile("\d{4}-\d{2}-\d{2}")
-    m = p.match(date)
-    if m is None:
-        raise Exception("the formate of date is error! correct formate is: xxxx-xx-xx")
-
 
 """
 获取当天的delta天之前的日期
@@ -52,60 +31,6 @@ def get_delta_date(delta):
     diff = datetime.timedelta(days=delta)
     before_date = date_obj - diff
     return before_date.strftime("%Y-%m-%d")
-
-
-"""
-获取date前一天的日期
-"""
-
-
-def get_yesterday(date):
-    date = date.split(" ")[0]
-    time_obj = time.strptime(date, "%Y-%m-%d")
-    date_obj = datetime.datetime(time_obj[0], time_obj[1], time_obj[2]).date()
-    one_day = datetime.timedelta(days=1)
-    yesterday = date_obj - one_day
-    return yesterday.strftime("%Y-%m-%d")
-
-
-# 根据topic获取topic_id
-def get_topic_id(topic):
-    topic_id = 0
-
-    cursor = mysql_db.cursor()
-    sql = "SELECT * FROM topic WHERE table_name = '%s' " % (topic)
-    try:
-        cursor.execute(sql)
-        one_topic = cursor.fetchone()
-        topic_id = one_topic[0]
-    except Exception as e:
-        log.error("Error: unable to fecth data")
-        log.exception(e)
-
-    cursor.close()
-    return topic_id
-
-
-# 根据topic_id获取主题的所有站点
-def get_sites_by_topic_id(topic_id):
-    res = []
-    cursor = mysql_db.cursor()
-    sql = "SELECT * FROM site"
-    try:
-        cursor.execute(sql)
-        rows = cursor.fetchall()
-        # 遍历sites
-        for row in rows:
-            label = row[10]
-            site = row[7]
-            topic_ids = label.split(",") if label else []
-            if str(topic_id) in topic_ids:
-                res.append(site)
-    except Exception as e:
-        log.error("Error: unable to fecth data")
-        log.exception(e)
-    cursor.close()
-    return res
 
 
 # 迭代1和迭代2的主题
@@ -136,12 +61,7 @@ topic_name_list = topic_name_list1
 topic_name_list.extend(topic_name_list2)
 
 
-# @click.command()
-# @click.option("-s", "--st", default="", help=u"统计的开始时间")
-# @click.option("-e", "--et", default="", help=u"统计的结束时间")
 def main():
-    # 只要有一个日期为""，则st为当前日期的七天之前的日期，et为当天日期
-
     start_date = get_delta_date(CHECK_DATES)
     end_date = time.strftime("%Y-%m-%d")
 
@@ -162,14 +82,6 @@ def main():
         log.info("当前统计的topic为: {}".format(table_name))
 
         collection = mongo_db[table_name]
-        if table_name in CHECK_TOPIC:
-            site_list = CHECK_TOPIC[table_name]["sites"]
-        else:
-            site_list = []
-            sites_str_list = get_sites_by_topic_id(get_topic_id(table_name))
-            for ss in sites_str_list:
-                site_list.append({"site": ss})
-
         cursor = collection.find({'_utime': {'$gte': start_time, '$lte': end_time}},
                                  ['_src'],
                                  no_cursor_timeout=True).batch_size(1000)
@@ -188,45 +100,23 @@ def main():
             if count % 1000 == 0:
                 log.info("当前进度: {} {}".format(table_name, count))
 
-        # maps.append(site_count_map)
         cursor.close()
 
-        for site_item in site_list:
-            site_info = site_item['site']
-            site_tmp = {u"主题": topic_name_list[index] + table_name, u"站点": site_info, u"TAG": ""}
-
-            site_num = site_count_map.get(site_info)
-            if site_num is not None:
-                site_tmp[sheet_one_col_list[2]] = site_num
-                continue
-
-            site_tmp[sheet_one_col_list[2]] = -1
-            for key, value in site_count_map.items():
-                if key in site_info or site_info in key:
-                    site_tmp[sheet_one_col_list[2]] = value
-                    log.info('in 操作找到站点信息: {} {}'.format(topic_name_list[index] + table_name, site_info))
-                    break
-
-            if site_tmp[sheet_one_col_list[2]] == -1:
-                site_tmp[sheet_one_col_list[2]] = 0
-                log.warn('当前站点没有找到数据信息: {} {}'.format(topic_name_list[index] + table_name, site_info))
-
-            sheet_one_list.append(site_tmp)
-
+        total_count = 0
+        for _site, site_count in site_count_map.iteritems():
+            total_count += site_count
+            sheet_one_list.append({u"主题": topic_name_list[index] + table_name,
+                                   u"站点": _site,
+                                   sheet_two_col_list[-1]: site_count})
         # 计算总量
-        sheet_two_tmp = {u"主题": topic_name_list[index] + table_name}
-        count = 0
-
-        for site_item in site_list:
-            count += site_count_map.get(site_item['site'], 0)
-        sheet_two_tmp[sheet_two_col_list[1]] = count
-        sheet_two_list.append(sheet_two_tmp)
+        sheet_two_list.append({u"主题": topic_name_list[index] + table_name,
+                               sheet_two_col_list[-1]: total_count})
 
     df = pd.DataFrame(sheet_one_list, columns=sheet_one_col_list)
     df2 = pd.DataFrame(sheet_two_list, columns=sheet_two_col_list)
     with pd.ExcelWriter("{st}_{et}_utime_sites_statistics.xls".format(st=start_date, et=end_date)) as writer:
-        df.to_excel(writer, index=False)
-        df2.to_excel(writer, sheet_name="sheet2", index=False)
+        df.to_excel(writer, sheet_name="站点抓取统计", index=False)
+        df2.to_excel(writer, sheet_name="主题总量统计", index=False)
     log.info('统计结束...')
 
 

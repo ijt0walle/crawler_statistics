@@ -23,22 +23,6 @@ MONGO_CONFIG = {
     'password': 'haizhi'
 }
 
-# 招行配置
-# MYSQL_CONFIG = {
-#     'host': '99.240.10.137',
-#     'username': 'work',
-#     'password': 'haizhi@)',
-#     'db': 'cmb_crawl',
-# }
-
-# 海致配置
-MYSQL_CONFIG = {
-    'host': 'rm-wz9x07x9567465305.mysql.rds.aliyuncs.com',
-    'username': 'work',
-    'password': 'haizhi@)3',
-    'db': 'cmb_crawl',
-}
-
 CHECK_DATES = 7
 
 CHECK_TOPIC = {
