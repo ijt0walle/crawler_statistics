@@ -186,6 +186,7 @@ def main(st, et):
                     cur_site = item["_src"][0]["site"].strip()
                     site_count_map[cur_site] = site_count_map[cur_site] + 1 if site_count_map.has_key(cur_site) else 1
             maps.append(site_count_map)
+            cursor.close()
 
         for site in sites:
             tmp = {u"主题": topic_name_list[index] + table_name, u"站点": site["site"]}
