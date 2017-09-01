@@ -107,12 +107,17 @@ def main():
         total_count = 0
         for _site, site_count in site_count_map.iteritems():
             total_count += site_count
-            sheet_one_list.append({u"主题": topic_name_list[index] + table_name,
-                                   u"站点": _site,
-                                   sheet_two_col_list[-1]: site_count})
+            item = {u"主题": topic_name_list[index] + table_name,
+                    u"站点": _site,
+                    sheet_one_col_list[-1]: site_count}
+            log.info(json.dumps(item, ensure_ascii=False))
+            sheet_one_list.append(item)
+
         # 计算总量
-        sheet_two_list.append({u"主题": topic_name_list[index] + table_name,
-                               sheet_two_col_list[-1]: total_count})
+        total_item = {u"主题": topic_name_list[index] + table_name,
+                      sheet_two_col_list[-1]: total_count}
+        sheet_two_list.append(total_item)
+        log.info(json.dumps(total_item, ensure_ascii=False))
 
     df = pd.DataFrame(sheet_one_list, columns=sheet_one_col_list)
     df2 = pd.DataFrame(sheet_two_list, columns=sheet_two_col_list)
