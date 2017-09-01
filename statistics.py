@@ -28,7 +28,7 @@ mongo_db.authenticate(MONGO_CONFIG['username'], MONGO_CONFIG['password'])
 """
 
 
-def checkDateFormate(date):
+def check_date_formate(date):
     p = re.compile("\d{4}-\d{2}-\d{2}")
     m = p.match(date)
     if m is None:
@@ -40,11 +40,11 @@ def checkDateFormate(date):
 """
 
 
-def getDeltaDate(delta):
-    dateObj = datetime.datetime(int(time.strftime("%Y")), int(time.strftime("%m")), int(time.strftime("%d"))).date()
+def get_delta_date(delta):
+    date_obj = datetime.datetime(int(time.strftime("%Y")), int(time.strftime("%m")), int(time.strftime("%d"))).date()
     diff = datetime.timedelta(days=delta)
-    beforeDate = dateObj - diff
-    return beforeDate.strftime("%Y-%m-%d")
+    before_date = date_obj - diff
+    return before_date.strftime("%Y-%m-%d")
 
 
 """
@@ -52,17 +52,17 @@ def getDeltaDate(delta):
 """
 
 
-def getYesterday(date):
+def get_yesterday(date):
     date = date.split(" ")[0]
-    timeObj = time.strptime(date, "%Y-%m-%d")
-    dateObj = datetime.datetime(timeObj[0], timeObj[1], timeObj[2]).date()
-    oneday = datetime.timedelta(days=1)
-    yesterday = dateObj - oneday
+    time_obj = time.strptime(date, "%Y-%m-%d")
+    date_obj = datetime.datetime(time_obj[0], time_obj[1], time_obj[2]).date()
+    one_day = datetime.timedelta(days=1)
+    yesterday = date_obj - one_day
     return yesterday.strftime("%Y-%m-%d")
 
 
 # 根据topic获取topic_id
-def getTopicId(topic):
+def get_topic_id(topic):
     topic_id = 0
     mysql_db = MySQLdb.connect(MYSQL_CONFIG['host'],
                                MYSQL_CONFIG['username'],
@@ -83,7 +83,7 @@ def getTopicId(topic):
 
 
 # 根据topic_id获取主题的所有站点
-def getSitesByTopicId(topicId):
+def get_sites_by_topic_id(topic_id):
     res = []
     mysql_db = MySQLdb.connect(MYSQL_CONFIG['host'],
                                MYSQL_CONFIG['username'],
@@ -99,9 +99,9 @@ def getSitesByTopicId(topicId):
             label = row[10]
             site = row[7]
             topic_ids = label.split(",") if label else []
-            if str(topicId) in topic_ids:
+            if str(topic_id) in topic_ids:
                 res.append(site)
-    except Exception, e:
+    except Exception as e:
         log.error("Error: unable to fecth data")
         log.exception(e)
     mysql_db.close()
@@ -142,7 +142,7 @@ topic_name_list.extend(topic_name_list2)
 def main():
     # 只要有一个日期为""，则st为当前日期的七天之前的日期，et为当天日期
 
-    start_date = getDeltaDate(7)
+    start_date = get_delta_date(7)
     end_date = time.strftime("%Y-%m-%d")
 
     start_time = start_date + " 00:00:00"
@@ -155,11 +155,11 @@ def main():
     #     start_time = st
     #     end_time = et
 
-    checkDateFormate(start_time)
-    checkDateFormate(end_time)
-    cols.append(start_time + u"至" + getYesterday(end_time))
+    check_date_formate(start_time)
+    check_date_formate(end_time)
+    cols.append(start_time + u"至" + get_yesterday(end_time))
     cols.append(u"TAG")
-    cols2.append(start_time + u"至" + getYesterday(end_time))
+    cols2.append(start_time + u"至" + get_yesterday(end_time))
 
     batch = []
     batch2 = []
@@ -172,11 +172,11 @@ def main():
         log.info("当前统计的topic为: {}".format(table_name))
 
         collection = mongo_db[table_name]
-        if CHECK_TOPIC.has_key(table_name):
+        if table_name in CHECK_TOPIC:
             site_list = CHECK_TOPIC[table_name]["sites"]
         else:
             site_list = []
-            sites_str = getSitesByTopicId(getTopicId(table_name))
+            sites_str = get_sites_by_topic_id(get_topic_id(table_name))
             for ss in sites_str:
                 site_list.append({"site": ss})
 
@@ -187,9 +187,9 @@ def main():
         site_count_map = {}
         for item in cursor:
             count += 1
-            if item.has_key("_src") and len(item["_src"]) > 0 and item["_src"][0].has_key("site"):
+            if '_src' in item and len(item["_src"]) > 0 and "site" in item["_src"][0]:
                 cur_site = item["_src"][0]["site"].strip()
-                site_count_map[cur_site] = site_count_map[cur_site] + 1 if site_count_map.has_key(cur_site) else 1
+                site_count_map[cur_site] = site_count_map[cur_site] + 1 if cur_site in site_count_map else 1
             else:
                 _id = item.pop('_id')
                 log.warn("当前数据_src不符合条件:  {} {} {}".format(
@@ -243,6 +243,6 @@ def main():
 if __name__ == "__main__":
     try:
         main()
-    except Exception as e:
+    except Exception as ex:
         log.error("程序异常退出:")
-        log.exception(e)
+        log.exception(ex)
