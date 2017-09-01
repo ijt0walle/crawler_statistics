@@ -170,12 +170,12 @@ def main(st, et):
 
         collection = mongo_db[table_name]
         if CHECK_TOPIC.has_key(table_name):
-            sites = CHECK_TOPIC[table_name]["sites"]
+            site_list = CHECK_TOPIC[table_name]["sites"]
         else:
-            sites = []
+            site_list = []
             sites_str = getSitesByTopicId(getTopicId(table_name))
             for ss in sites_str:
-                sites.append({"site": ss})
+                site_list.append({"site": ss})
 
         cursor = collection.find({'_utime': {'$gte': start_time, '$lte': end_time}},
                                  ['_src'],
@@ -197,7 +197,7 @@ def main(st, et):
         # maps.append(site_count_map)
         cursor.close()
 
-        for site in sites:
+        for site in site_list:
             tmp = {u"主题": topic_name_list[index] + table_name, u"站点": site["site"], u"TAG": ""}
 
             site_num = site_count_map.get(site["site"])
@@ -222,7 +222,7 @@ def main(st, et):
         tmp2 = {u"主题": topic_name_list[index] + table_name}
         count = 0
 
-        for site in sites:
+        for site in site_list:
             count += site_count_map.get(site["site"], 0)
         tmp2[cols2[1]] = count
         batch2.append(tmp2)
@@ -236,4 +236,8 @@ def main(st, et):
 
 
 if __name__ == "__main__":
-    main()
+    try:
+        main()
+    except Exception as e:
+        log.error("程序异常退出:")
+        log.exception(e)
