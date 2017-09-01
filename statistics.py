@@ -18,9 +18,16 @@ from logger import Logger
 
 log = Logger("statistics.log").get_logger()
 
+# mongodb 初始化
 client = pymongo.MongoClient(MONGO_CONFIG['host'], MONGO_CONFIG['port'])
 mongo_db = client[MONGO_CONFIG['db']]
 mongo_db.authenticate(MONGO_CONFIG['username'], MONGO_CONFIG['password'])
+
+# mysql 初始化
+mysql_db = MySQLdb.connect(MYSQL_CONFIG['host'],
+                           MYSQL_CONFIG['username'],
+                           MYSQL_CONFIG['password'],
+                           MYSQL_CONFIG['db'], charset="utf8")
 
 """
 验证日期格式是否是形如xxxx-xx-xx的形式
@@ -64,10 +71,7 @@ def get_yesterday(date):
 # 根据topic获取topic_id
 def get_topic_id(topic):
     topic_id = 0
-    mysql_db = MySQLdb.connect(MYSQL_CONFIG['host'],
-                               MYSQL_CONFIG['username'],
-                               MYSQL_CONFIG['password'],
-                               MYSQL_CONFIG['db'], charset="utf8")
+
     cursor = mysql_db.cursor()
     sql = "SELECT * FROM topic WHERE table_name = '%s' " % (topic)
     try:
@@ -78,17 +82,13 @@ def get_topic_id(topic):
         log.error("Error: unable to fecth data")
         log.exception(e)
 
-    mysql_db.close()
+    cursor.close()
     return topic_id
 
 
 # 根据topic_id获取主题的所有站点
 def get_sites_by_topic_id(topic_id):
     res = []
-    mysql_db = MySQLdb.connect(MYSQL_CONFIG['host'],
-                               MYSQL_CONFIG['username'],
-                               MYSQL_CONFIG['password'],
-                               MYSQL_CONFIG['db'], charset="utf8")
     cursor = mysql_db.cursor()
     sql = "SELECT * FROM site"
     try:
@@ -104,7 +104,7 @@ def get_sites_by_topic_id(topic_id):
     except Exception as e:
         log.error("Error: unable to fecth data")
         log.exception(e)
-    mysql_db.close()
+    cursor.close()
     return res
 
 
