@@ -170,8 +170,8 @@ def main(st, et):
             sites = CHECK_TOPIC[table_name]["sites"]
         else:
             sites = []
-            sites_strs = getSitesByTopicId(getTopicId(table_name))
-            for ss in sites_strs:
+            sites_str = getSitesByTopicId(getTopicId(table_name))
+            for ss in sites_str:
                 sites.append({"site": ss})
 
         maps = []
