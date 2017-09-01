@@ -158,7 +158,11 @@ def main(st, et):
     batch = []
     batch2 = []
 
+    log.info("开始启动统计..")
     for index, topic in enumerate(topics):
+
+        log.info("当前统计的topic为: {}".format(topic))
+
         collection = mongo_db[topic]
         if CHECK_TOPIC.has_key(topic):
             sites = CHECK_TOPIC[topic]["sites"]
