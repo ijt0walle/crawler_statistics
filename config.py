@@ -449,6 +449,3 @@ CHECK_TOPIC = {
         {'name': '拍拍贷', 'site': 'www.ppdai.com', "ignore": True, "tag": u"站点均被重定向至首页"},
     ]},
 }
-
-if __name__ == "__main__":
-    print CHECK_TOPIC
