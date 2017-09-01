@@ -5,6 +5,7 @@
 """
 
 import datetime
+import json
 import re
 import time
 
@@ -126,9 +127,6 @@ topic_name_list2 = [u"PPP项目库", u"网贷黑名单", u"投资机构", u"投�
                     u"投资基金-投资事件", u"投资基金-退出事件", u"投资基金-并购事件", u"投资基金-上市事件", u"土地转让",
                     u"房地产-新房（链家）深圳市", u"房地产-二手在售房源深圳市", u"房地产-小区（链家）深圳市", u"土地基本信息", u"土地招拍挂"]
 
-start_time_list = []
-end_time_list = []
-
 cols = [u"主题", u"站点"]
 cols2 = [u"主题"]
 
@@ -144,25 +142,30 @@ topic_name_list.extend(topic_name_list2)
 @click.option("-e", "--et", default="", help=u"统计的结束时间")
 def main(st, et):
     # 只要有一个日期为""，则st为当前日期的七天之前的日期，et为当天日期
-    if st == "" or et == "":
-        st = getDeltaDate(7) + " 00:00:00"
-        et = time.strftime("%Y-%m-%d") + " 23:59:59"
-    checkDateFormate(st)
-    checkDateFormate(et)
-    start_time_list.append(st)
-    end_time_list.append(et)
-    cols.append(st + u"至" + getYesterday(et))
-    cols.append(u"TAG")
-    cols2.append(st + u"至" + getYesterday(et))
 
-    col_nums = len(start_time_list)
+    start_date = getDeltaDate(7)
+    end_date = time.strftime("%Y-%m-%d")
+    if st == "" or et == "":
+        start_time = start_date + " 00:00:00"
+        end_time = end_date + " 23:59:59"
+    else:
+        start_time = st
+        end_time = et
+
+    checkDateFormate(start_time)
+    checkDateFormate(end_time)
+    cols.append(start_time + u"至" + getYesterday(end_time))
+    cols.append(u"TAG")
+    cols2.append(start_time + u"至" + getYesterday(end_time))
+
     batch = []
     batch2 = []
 
     log.info("开始启动统计..")
-    log.info("当前统计的时间段为: {} - {}".format(st, et))
+    log.info("当前统计的时间段为: {} - {}".format(start_time, end_time))
     for index, table_name in enumerate(table_name_list):
 
+        count = 0
         log.info("当前统计的topic为: {}".format(table_name))
 
         collection = mongo_db[table_name]
@@ -174,55 +177,59 @@ def main(st, et):
             for ss in sites_str:
                 sites.append({"site": ss})
 
-        maps = []
-        for i in range(col_nums):
-            cursor = collection.find({'_utime': {'$gte': start_time_list[i], '$lte': end_time_list[i]}},
-                                     ['_src'],
-                                     no_cursor_timeout=True).batch_size(1000)
-            # 站点与统计量的映射
-            site_count_map = {}
-            for item in cursor:
-                if item.has_key("_src") and len(item["_src"]) > 0 and item["_src"][0].has_key("site"):
-                    cur_site = item["_src"][0]["site"].strip()
-                    site_count_map[cur_site] = site_count_map[cur_site] + 1 if site_count_map.has_key(cur_site) else 1
-            maps.append(site_count_map)
-            cursor.close()
+        cursor = collection.find({'_utime': {'$gte': start_time, '$lte': end_time}},
+                                 ['_src'],
+                                 no_cursor_timeout=True).batch_size(1000)
+        # 站点与统计量的映射
+        site_count_map = {}
+        for item in cursor:
+            count += 1
+            if item.has_key("_src") and len(item["_src"]) > 0 and item["_src"][0].has_key("site"):
+                cur_site = item["_src"][0]["site"].strip()
+                site_count_map[cur_site] = site_count_map[cur_site] + 1 if site_count_map.has_key(cur_site) else 1
+            else:
+                log.warn("当前数据_src不符合条件:  {} {}".format(
+                    topic_name_list[index] + table_name,
+                    json.dumps(item, ensure_ascii=False)))
+            if count % 1000 == 0:
+                log.info("当前进度: {} {}".format(table_name, count))
+
+        # maps.append(site_count_map)
+        cursor.close()
 
         for site in sites:
-            tmp = {u"主题": topic_name_list[index] + table_name, u"站点": site["site"]}
-            for i in range(col_nums):
+            tmp = {u"主题": topic_name_list[index] + table_name, u"站点": site["site"], u"TAG": ""}
 
-                tmp[u"TAG"] = ""  # site.get("tag", "")
-                site_num = maps[i].get(site["site"])
-                if site_num is not None:
-                    tmp[cols[i + 2]] = site_num
-                    continue
+            site_num = site_count_map.get(site["site"])
+            if site_num is not None:
+                tmp[cols[2]] = site_num
+                continue
 
-                tmp[cols[i + 2]] = -1
-                for key, value in maps[i].items():
-                    if key in site['site'] or site['site'] in key:
-                        tmp[cols[i + 2]] = value
-                        log.info('in 操作找到站点信息: {} {}'.format(topic_name_list[index] + table_name, site['site']))
-                        break
+            tmp[cols[2]] = -1
+            for key, value in site_count_map.items():
+                if key in site['site'] or site['site'] in key:
+                    tmp[cols[2]] = value
+                    log.info('in 操作找到站点信息: {} {}'.format(topic_name_list[index] + table_name, site['site']))
+                    break
 
-                if tmp[cols[i + 2]] == -1:
-                    tmp[cols[i + 2]] = 0
-                    log.warn('当前站点没有找到数据信息: {} {}'.format(topic_name_list[index] + table_name, site['site']))
+            if tmp[cols[2]] == -1:
+                tmp[cols[2]] = 0
+                log.warn('当前站点没有找到数据信息: {} {}'.format(topic_name_list[index] + table_name, site['site']))
 
             batch.append(tmp)
 
         # 计算总量
         tmp2 = {u"主题": topic_name_list[index] + table_name}
         count = 0
-        for i in range(col_nums):
-            for site in sites:
-                count += maps[i].get(site["site"], 0)
-            tmp2[cols2[i + 1]] = count
+
+        for site in sites:
+            count += site_count_map.get(site["site"], 0)
+        tmp2[cols2[1]] = count
         batch2.append(tmp2)
 
     df = pd.DataFrame(batch[:65000], columns=cols)
     df2 = pd.DataFrame(batch2[:65000], columns=cols2)
-    with pd.ExcelWriter("{st}_{et}_utime_sites_statistics.xls".format(st=st, et=getYesterday(et))) as writer:
+    with pd.ExcelWriter("{st}_{et}_utime_sites_statistics.xls".format(st=start_date, et=end_date)) as writer:
         df.to_excel(writer, index=False)
         df2.to_excel(writer, sheet_name="sheet2", index=False)
     log.info('统计结束...')
