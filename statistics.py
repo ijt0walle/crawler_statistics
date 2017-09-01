@@ -122,8 +122,8 @@ def main():
     df = pd.DataFrame(sheet_one_list, columns=sheet_one_col_list)
     df2 = pd.DataFrame(sheet_two_list, columns=sheet_two_col_list)
     with pd.ExcelWriter("{st}_{et}_utime_sites_statistics.xls".format(st=start_date, et=end_date)) as writer:
-        df.to_excel(writer, sheet_name="站点抓取统计", index=False)
-        df2.to_excel(writer, sheet_name="主题总量统计", index=False)
+        df.to_excel(writer, index=False)
+        df2.to_excel(writer, sheet_name="sheet2", index=False)
     log.info('统计结束...')
 
 
