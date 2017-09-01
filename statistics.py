@@ -165,10 +165,12 @@ def main(whole):
 
     if is_all is False:
         sheet_one_col_list.append(start_time + u"至" + end_time)
+        sheet_one_col_list.append(u'招行站点')
         sheet_two_col_list.append(start_time + u"至" + end_time)
         log.info("当前统计的时间段为: {} - {}".format(start_time, end_time))
     else:
         sheet_one_col_list.append(u"全量统计")
+        sheet_one_col_list.append(u'招行站点')
         sheet_two_col_list.append(u"全量统计")
         log.info("当前为全量统计...")
 
@@ -220,12 +222,12 @@ def main(whole):
             total_count += site_count
             item = {u"主题": topic_name_list[index] + table_name,
                     u"站点": _site,
-                    sheet_one_col_list[-1]: site_count}
+                    sheet_one_col_list[-2]: site_count}
 
             if _site in site_set:
-                item[u'招行站点'] = u'是'
+                item[sheet_one_col_list[-1]] = u'是'
             else:
-                item[u'招行站点'] = u'------'
+                item[sheet_one_col_list[-1]] = u'------'
 
             log.info(json.dumps(item, ensure_ascii=False))
             sheet_one_list.append(item)
