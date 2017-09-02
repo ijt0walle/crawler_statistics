@@ -13,7 +13,7 @@ import click
 import pandas as pd
 import pymongo
 
-from config import MONGO_CONFIG, CHECK_DATES, CHECK_TOPIC, MYSQL_CONFIG
+from config import MONGO_CONFIG, CHECK_DATES, CHECK_TOPIC, MYSQL_CONFIG, TABLE_NAME_LIST, TOPIC_NAME_LIST
 from logger import Logger
 
 log = Logger("statistics.log").get_logger()
@@ -41,32 +41,12 @@ def get_delta_date(delta):
     return before_date.strftime("%Y-%m-%d")
 
 
-# 迭代1和迭代2的主题
-table_name_list1 = ["enterprise_data_gov", "enterprise_owing_tax", "penalty", "patent", "baidu_news",
-                    "news", "ssgs_notice_cninfo", "ssgs_baseinfo", "ssgs_caibao_companies_ability",
-                    "ssgs_caibao_assets_liabilities",
-                    "ssgs_caibao_profit", "judgement_wenshu", "zhixing_info", "shixin_info", "judge_process",
-                    "bid_detail", "bulletin", "court_ktgg"]
-topic_name_list1 = [u"工商信息、变更信息", u"欠税信息", u"行政处罚", u"专利信息", u"百度新闻",
-                    u"新闻", u"上市公告", u"上市公司基本信息表", u"上市公司财报-公司综合能力指标", u"上市公司财报-资产负债表",
-                    u"上市公司财报-利润表", u"裁判文书", u"执行信息", u"失信信息", u"审判流程",
-                    u"招中标信息", u"法院公告", u"开庭公告"]
-table_name_list2 = ["ppp_project", "net_loan_blacklist", "investment_institutions", "investment_funds",
-                    "financing_events",
-                    "investment_events", "exit_event", "acquirer_event", "listing_events", "land_project_selling",
-                    "loupan_lianjia", "ershoufang_lianjia", "xiaoqu_lianjia", "land_selling_auction", "land_auction"]
-topic_name_list2 = [u"PPP项目库", u"网贷黑名单", u"投资机构", u"投资基金", u"投资基金-融资事件",
-                    u"投资基金-投资事件", u"投资基金-退出事件", u"投资基金-并购事件", u"投资基金-上市事件", u"土地转让",
-                    u"房地产-新房（链家）深圳市", u"房地产-二手在售房源深圳市", u"房地产-小区（链家）深圳市", u"土地基本信息", u"土地招拍挂"]
-
 sheet_one_col_list = [u"主题", u"站点"]
 sheet_two_col_list = [u"主题"]
 
 # 合并
-table_name_list = table_name_list1
-table_name_list.extend(table_name_list2)
-topic_name_list = topic_name_list1
-topic_name_list.extend(topic_name_list2)
+table_name_list = TABLE_NAME_LIST
+topic_name_list = TOPIC_NAME_LIST
 
 
 # 根据topic获取topic_id
