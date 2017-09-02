@@ -13,7 +13,7 @@ import click
 import pandas as pd
 import pymongo
 
-from config import MONGO_CONFIG, CHECK_DATES, CHECK_TOPIC, MYSQL_CONFIG
+from config import MONGO_CONFIG, CHECK_DATES, CHECK_TOPIC, MYSQL_CONFIG, TABLE_NAME_LIST, TOPIC_NAME_LIST
 from logger import Logger
 
 log = Logger("statistics.log").get_logger()
@@ -41,32 +41,12 @@ def get_delta_date(delta):
     return before_date.strftime("%Y-%m-%d")
 
 
-# 迭代1和迭代2的主题
-table_name_list1 = ["enterprise_data_gov", "enterprise_owing_tax", "penalty", "patent", "baidu_news",
-                    "news", "ssgs_notice_cninfo", "ssgs_baseinfo", "ssgs_caibao_companies_ability",
-                    "ssgs_caibao_assets_liabilities",
-                    "ssgs_caibao_profit", "judgement_wenshu", "zhixing_info", "shixin_info", "judge_process",
-                    "bid_detail", "bulletin", "court_ktgg"]
-topic_name_list1 = [u"工商信息、变更信息", u"欠税信息", u"行政处罚", u"专利信息", u"百度新闻",
-                    u"新闻", u"上市公告", u"上市公司基本信息表", u"上市公司财报-公司综合能力指标", u"上市公司财报-资产负债表",
-                    u"上市公司财报-利润表", u"裁判文书", u"执行信息", u"失信信息", u"审判流程",
-                    u"招中标信息", u"法院公告", u"开庭公告"]
-table_name_list2 = ["ppp_project", "net_loan_blacklist", "investment_institutions", "investment_funds",
-                    "financing_events",
-                    "investment_events", "exit_event", "acquirer_event", "listing_events", "land_project_selling",
-                    "loupan_lianjia", "ershoufang_lianjia", "xiaoqu_lianjia", "land_selling_auction", "land_auction"]
-topic_name_list2 = [u"PPP项目库", u"网贷黑名单", u"投资机构", u"投资基金", u"投资基金-融资事件",
-                    u"投资基金-投资事件", u"投资基金-退出事件", u"投资基金-并购事件", u"投资基金-上市事件", u"土地转让",
-                    u"房地产-新房（链家）深圳市", u"房地产-二手在售房源深圳市", u"房地产-小区（链家）深圳市", u"土地基本信息", u"土地招拍挂"]
-
 sheet_one_col_list = [u"主题", u"站点"]
 sheet_two_col_list = [u"主题"]
 
 # 合并
-table_name_list = table_name_list1
-table_name_list.extend(table_name_list2)
-topic_name_list = topic_name_list1
-topic_name_list.extend(topic_name_list2)
+table_name_list = TABLE_NAME_LIST
+topic_name_list = TOPIC_NAME_LIST
 
 
 # 根据topic获取topic_id
@@ -116,33 +96,38 @@ def get_all_site_info():
     total_site = 0
     for table_name in table_name_list:
 
-        all_site_dict[table_name] = set()
+        count_dict = {}
+        while True:
+            all_site_dict[table_name] = set()
 
-        # assert table_name in CHECK_TOPIC
-        if table_name not in CHECK_TOPIC:
-            log.info("表信息没有在配置文件中: {} 从数据库中进行加载...".format(table_name))
-            sites_str_list = get_sites_by_topic_id(get_topic_id(table_name))
-            for ss in sites_str_list:
-                # site_list.append({"site": ss})
-                all_site_dict[table_name].add(ss)
-            log.info("数据库中加载数目为: {} {} {}".format(
-                table_name, len(sites_str_list), sites_str_list))
-            total_site += len(all_site_dict[table_name])
-            continue
+            if table_name not in CHECK_TOPIC:
+                log.info("表信息没有在配置文件中: {} 从数据库中进行加载...".format(table_name))
+                sites_str_list = get_sites_by_topic_id(get_topic_id(table_name))
+                for ss in sites_str_list:
+                    all_site_dict[table_name].add(ss)
+                log.info("数据库中加载数目为: {} {} {}".format(
+                    table_name, len(sites_str_list), sites_str_list))
 
-        table_dict = CHECK_TOPIC.get(table_name)
-        site_list = table_dict.get('sites')
-        assert site_list is not None
-        for site_dict in site_list:
-            site = site_dict.get('site')
-            assert site is not None
-            all_site_dict[table_name].add(site)
+                break
+
+            table_dict = CHECK_TOPIC.get(table_name)
+            site_list = table_dict.get('sites')
+            assert site_list is not None
+
+            for site_dict in site_list:
+                site = site_dict.get('site')
+                assert site is not None
+                all_site_dict[table_name].add(site)
+                if site in count_dict:
+                    count_dict[site] += 1
+                else:
+                    count_dict[site] = 1
+            break
 
         total_site += len(all_site_dict[table_name])
-        # 一定没有重复的站点
-        # if len(all_site_dict[table_name]) != len(site_list):
-        #     log.info("去重后: {} --- 去重前: {}".format(len(all_site_dict[table_name]), len(site_list)))
-        #     raise Exception("当前表中的站点有重复: {}".format(table_name))
+        for key, value in count_dict.iteritems():
+            if value >= 2:
+                log.info("当前主题站点有重复: {} {} {}".format(table_name, key, value))
 
     log.info("招行关注站点总数目: {}".format(total_site))
     log.info(all_site_dict)
@@ -171,11 +156,13 @@ def main(whole):
         sheet_one_col_list.append(start_time + u"至" + end_time)
         sheet_one_col_list.append(u'招行站点')
         sheet_two_col_list.append(start_time + u"至" + end_time)
+        excel_name = "{st}_{et}_utime_sites_statistics.xls".format(st=start_date, et=end_date)
         log.info("当前统计的时间段为: {} - {}".format(start_time, end_time))
     else:
         sheet_one_col_list.append(u"全量统计")
         sheet_one_col_list.append(u'招行站点')
         sheet_two_col_list.append(u"全量统计")
+        excel_name = "all_utime_sites_statistics.xls"
         log.info("当前为全量统计...")
 
     # 获得所有站点信息
@@ -244,7 +231,7 @@ def main(whole):
 
     df = pd.DataFrame(sheet_one_list, columns=sheet_one_col_list)
     df2 = pd.DataFrame(sheet_two_list, columns=sheet_two_col_list)
-    with pd.ExcelWriter("{st}_{et}_utime_sites_statistics.xls".format(st=start_date, et=end_date)) as writer:
+    with pd.ExcelWriter(excel_name) as writer:
         df.to_excel(writer, index=False)
         df2.to_excel(writer, sheet_name="sheet2", index=False)
     log.info('统计结束...')

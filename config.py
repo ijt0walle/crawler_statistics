@@ -39,8 +39,24 @@ MYSQL_CONFIG = {
     'db': 'cmb_crawl',
 }
 
-
 CHECK_DATES = 6
+
+# 迭代1和迭代2的主题
+TABLE_NAME_LIST = ["enterprise_data_gov", "enterprise_owing_tax", "penalty", "patent", "baidu_news",
+                   "news", "ssgs_notice_cninfo", "ssgs_baseinfo", "ssgs_caibao_companies_ability",
+                   "ssgs_caibao_assets_liabilities",
+                   "ssgs_caibao_profit", "judgement_wenshu", "zhixing_info", "shixin_info", "judge_process",
+                   "bid_detail", "bulletin", "court_ktgg", "ppp_project", "net_loan_blacklist",
+                   "investment_institutions", "investment_funds",
+                   "financing_events",
+                   "investment_events", "exit_event", "acquirer_event", "listing_events", "land_project_selling",
+                   "loupan_lianjia", "ershoufang_lianjia", "xiaoqu_lianjia", "land_selling_auction", "land_auction"]
+TOPIC_NAME_LIST = [u"工商信息、变更信息", u"欠税信息", u"行政处罚", u"专利信息", u"百度新闻",
+                   u"新闻", u"上市公告", u"上市公司基本信息表", u"上市公司财报-公司综合能力指标", u"上市公司财报-资产负债表",
+                   u"上市公司财报-利润表", u"裁判文书", u"执行信息", u"失信信息", u"审判流程",
+                   u"招中标信息", u"法院公告", u"开庭公告", u"PPP项目库", u"网贷黑名单", u"投资机构", u"投资基金", u"投资基金-融资事件",
+                   u"投资基金-投资事件", u"投资基金-退出事件", u"投资基金-并购事件", u"投资基金-上市事件", u"土地转让",
+                   u"房地产-新房（链家）深圳市", u"房地产-二手在售房源深圳市", u"房地产-小区（链家）深圳市", u"土地基本信息", u"土地招拍挂"]
 
 CHECK_TOPIC = {
     "enterprise_data_gov": {"description": "工商信息变更", "tag": u"离线抓取", "sites": [
