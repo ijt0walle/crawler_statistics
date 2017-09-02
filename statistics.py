@@ -116,33 +116,38 @@ def get_all_site_info():
     total_site = 0
     for table_name in table_name_list:
 
-        all_site_dict[table_name] = set()
+        count_dict = {}
+        while True:
+            all_site_dict[table_name] = set()
 
-        # assert table_name in CHECK_TOPIC
-        if table_name not in CHECK_TOPIC:
-            log.info("表信息没有在配置文件中: {} 从数据库中进行加载...".format(table_name))
-            sites_str_list = get_sites_by_topic_id(get_topic_id(table_name))
-            for ss in sites_str_list:
-                # site_list.append({"site": ss})
-                all_site_dict[table_name].add(ss)
-            log.info("数据库中加载数目为: {} {} {}".format(
-                table_name, len(sites_str_list), sites_str_list))
-            total_site += len(all_site_dict[table_name])
-            continue
+            if table_name not in CHECK_TOPIC:
+                log.info("表信息没有在配置文件中: {} 从数据库中进行加载...".format(table_name))
+                sites_str_list = get_sites_by_topic_id(get_topic_id(table_name))
+                for ss in sites_str_list:
+                    all_site_dict[table_name].add(ss)
+                log.info("数据库中加载数目为: {} {} {}".format(
+                    table_name, len(sites_str_list), sites_str_list))
 
-        table_dict = CHECK_TOPIC.get(table_name)
-        site_list = table_dict.get('sites')
-        assert site_list is not None
-        for site_dict in site_list:
-            site = site_dict.get('site')
-            assert site is not None
-            all_site_dict[table_name].add(site)
+                break
+
+            table_dict = CHECK_TOPIC.get(table_name)
+            site_list = table_dict.get('sites')
+            assert site_list is not None
+
+            for site_dict in site_list:
+                site = site_dict.get('site')
+                assert site is not None
+                all_site_dict[table_name].add(site)
+                if site in count_dict:
+                    count_dict[site] += 1
+                else:
+                    count_dict[site] = 1
+            break
 
         total_site += len(all_site_dict[table_name])
-        # 一定没有重复的站点
-        # if len(all_site_dict[table_name]) != len(site_list):
-        #     log.info("去重后: {} --- 去重前: {}".format(len(all_site_dict[table_name]), len(site_list)))
-        #     raise Exception("当前表中的站点有重复: {}".format(table_name))
+        for key, value in count_dict.iteritems():
+            if value >= 2:
+                log.info("当前主题站点有重复: {} {} {}".format(table_name, key, value))
 
     log.info("招行关注站点总数目: {}".format(total_site))
     log.info(all_site_dict)
