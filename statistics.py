@@ -156,11 +156,13 @@ def main(whole):
         sheet_one_col_list.append(start_time + u"至" + end_time)
         sheet_one_col_list.append(u'招行站点')
         sheet_two_col_list.append(start_time + u"至" + end_time)
+        excel_name = "{st}_{et}_utime_sites_statistics.xls".format(st=start_date, et=end_date)
         log.info("当前统计的时间段为: {} - {}".format(start_time, end_time))
     else:
         sheet_one_col_list.append(u"全量统计")
         sheet_one_col_list.append(u'招行站点')
         sheet_two_col_list.append(u"全量统计")
+        excel_name = "all_utime_sites_statistics.xls"
         log.info("当前为全量统计...")
 
     # 获得所有站点信息
@@ -229,7 +231,7 @@ def main(whole):
 
     df = pd.DataFrame(sheet_one_list, columns=sheet_one_col_list)
     df2 = pd.DataFrame(sheet_two_list, columns=sheet_two_col_list)
-    with pd.ExcelWriter("{st}_{et}_utime_sites_statistics.xls".format(st=start_date, et=end_date)) as writer:
+    with pd.ExcelWriter(excel_name) as writer:
         df.to_excel(writer, index=False)
         df2.to_excel(writer, sheet_name="sheet2", index=False)
     log.info('统计结束...')
