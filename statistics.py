@@ -186,8 +186,18 @@ def main(whole):
         for item in cursor:
             count += 1
             if '_src' in item and len(item["_src"]) > 0 and "site" in item["_src"][0]:
-                cur_site = item["_src"][0]["site"].strip()
-                site_count_map[cur_site] = site_count_map[cur_site] + 1 if cur_site in site_count_map else 1
+
+                src_set = set()
+                _src_list = item['_src']
+                for src in _src_list:
+                    if 'site' not in src:
+                        continue
+                    src_set.add(src['site'].strip())
+
+                # cur_site = item["_src"][0]["site"].strip()
+                # 需统计全部站点抓取
+                for key in src_set:
+                    site_count_map[key] = site_count_map[key] + 1 if key in site_count_map else 1
             else:
                 _id = item.pop('_id')
                 log.warn("当前数据_src不符合条件:  {} {} {}".format(
