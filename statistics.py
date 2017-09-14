@@ -134,6 +134,27 @@ def get_all_site_info():
     return all_site_dict
 
 
+# 获取所有站点官方数据统计
+def get_all_site_statistics():
+    site_list = []
+    data_list = []
+
+    with open("site_list.txt") as p_file:
+        for line in p_file:
+            site = line.strip()
+            site_list.append(site)
+
+    with open("site_all_crawl.txt") as p_file:
+        for line in p_file:
+            num = int(line.strip())
+            data_list.append(num)
+
+    if len(data_list) != len(site_list):
+        raise Exception("官方数据总量加载失败!")
+
+    return dict(zip(site_list, data_list))
+
+
 @click.command()
 @click.option("-w", "--whole", default="", help=u"全量统计")
 def main(whole):
@@ -154,19 +175,32 @@ def main(whole):
 
     if is_all is False:
         sheet_one_col_list.append(start_time + u"至" + end_time)
+
+        sheet_one_col_list.append(u"官方数量")
+        sheet_one_col_list.append(u"抓取占比")
+
         sheet_one_col_list.append(u'招行站点')
+
         sheet_two_col_list.append(start_time + u"至" + end_time)
         excel_name = "{st}_{et}_utime_sites_statistics.xls".format(st=start_date, et=end_date)
         log.info("当前统计的时间段为: {} - {}".format(start_time, end_time))
     else:
         sheet_one_col_list.append(u"全量统计")
+
+        sheet_one_col_list.append(u"官方数量")
+        sheet_one_col_list.append(u"抓取占比")
+
         sheet_one_col_list.append(u'招行站点')
+
         sheet_two_col_list.append(u"全量统计")
         excel_name = "all_utime_sites_statistics.xls"
         log.info("当前为全量统计...")
 
     # 获得所有站点信息
     all_site_dict = get_all_site_info()
+
+    # 获取站点官方数量
+    site_statistics_dict = get_all_site_statistics()
 
     for index, table_name in enumerate(table_name_list):
 
@@ -194,7 +228,6 @@ def main(whole):
                         continue
                     src_set.add(src['site'].strip())
 
-                # cur_site = item["_src"][0]["site"].strip()
                 # 需统计全部站点抓取
                 for key in src_set:
                     site_count_map[key] = site_count_map[key] + 1 if key in site_count_map else 1
@@ -223,7 +256,20 @@ def main(whole):
             total_count += site_count
             item = {u"主题": topic_name_list[index] + table_name,
                     u"站点": _site,
-                    sheet_one_col_list[-2]: site_count}
+                    sheet_one_col_list[2]: site_count}
+
+            # 3 官方数量
+            # 4 数据占比
+            # 如果站点有官方统计数目则进行占比计算
+            if _site in site_statistics_dict:
+                item[sheet_one_col_list[3]] = site_statistics_dict[_site]
+                if site_statistics_dict[_site] > 0:
+                    item[sheet_one_col_list[4]] = site_count / (site_statistics_dict[_site] * 1.0)
+                else:
+                    item[sheet_one_col_list[4]] = 1.0
+            else:
+                item[sheet_one_col_list[3]] = 0
+                item[sheet_one_col_list[4]] = 1.0
 
             if _site in site_set:
                 item[sheet_one_col_list[-1]] = u'是'
