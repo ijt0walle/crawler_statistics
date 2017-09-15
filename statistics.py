@@ -10,7 +10,7 @@ import time
 
 import MySQLdb
 import click
-import pandas as pd
+import pandas
 import pymongo
 
 from config import MONGO_CONFIG, CHECK_DATES, CHECK_TOPIC, MYSQL_CONFIG, TABLE_NAME_LIST, TOPIC_NAME_LIST, \
@@ -135,6 +135,19 @@ def get_all_site_info():
     return all_site_dict
 
 
+# 获得重点列表
+def get_import_set():
+    data_set = set()
+
+    with open("import_site_list.txt") as p_file:
+        for line in p_file:
+            site = line.strip()
+            data_set.add(site)
+
+    log.info("重要列表站点数目: {}".format(len(data_set)))
+    return data_set
+
+
 # 获取所有站点官方数据统计
 def get_all_site_statistics():
     site_list = []
@@ -156,23 +169,17 @@ def get_all_site_statistics():
     return dict(zip(site_list, data_list))
 
 
-@click.command()
-@click.option("-w", "--whole", default="", help=u"全量统计")
-def main(whole):
-    log.info("开始启动统计..")
-
+# 统计
+def statis(is_all, cur_time, days=CHECK_DATES):
     sheet_one_list = []
+    import_sheet_list = []
     sheet_two_list = []
 
-    start_date = get_delta_date(CHECK_DATES)
+    start_date = get_delta_date(days)
     end_date = time.strftime("%Y-%m-%d")
 
     start_time = start_date + " 00:00:00"
     end_time = end_date + " 23:59:59"
-
-    is_all = False
-    if whole == 'all':
-        is_all = True
 
     if is_all is False:
         sheet_one_col_list.append(start_time + u"至" + end_time)
@@ -183,7 +190,10 @@ def main(whole):
         sheet_one_col_list.append(u'招行站点')
 
         sheet_two_col_list.append(start_time + u"至" + end_time)
-        excel_name = "{st}_{et}_utime_sites_statistics.xls".format(st=start_date, et=end_date)
+        import_site_name = "[{}]_{}_{}_import_sites.xls".format(
+            cur_time, start_date, end_date)
+        excel_name = "[{}]_{}_{}_utime_sites.xls".format(
+            cur_time, start_date, end_date)
         log.info("当前统计的时间段为: {} - {}".format(start_time, end_time))
     else:
         sheet_one_col_list.append(u"全量统计")
@@ -194,7 +204,8 @@ def main(whole):
         sheet_one_col_list.append(u'招行站点')
 
         sheet_two_col_list.append(u"全量统计")
-        excel_name = "[{}]all_utime_sites_statistics.xls".format(datetime.datetime.now().strftime('%Y-%m-%d_%H_%M_%S'))
+        import_site_name = "[{}]_all_import_sites.xls".format(cur_time)
+        excel_name = "[{}]_all_utime_sites.xls".format(cur_time)
         log.info("当前为全量统计...")
 
     # 获得所有站点信息
@@ -202,6 +213,9 @@ def main(whole):
 
     # 获取站点官方数量
     site_statistics_dict = get_all_site_statistics()
+
+    # 获得重要列表信息
+    import_site_set = get_import_set()
 
     for index, table_name in enumerate(table_name_list):
 
@@ -284,6 +298,8 @@ def main(whole):
 
             log.info(json.dumps(item, ensure_ascii=False))
             sheet_one_list.append(item)
+            if row_key in import_site_set:
+                import_sheet_list.append(item)
 
         # 计算总量
         total_item = {u"主题": topic_name_list[index] + table_name,
@@ -291,12 +307,30 @@ def main(whole):
         sheet_two_list.append(total_item)
         log.info(json.dumps(total_item, ensure_ascii=False))
 
-    df = pd.DataFrame(sheet_one_list, columns=sheet_one_col_list)
-    df2 = pd.DataFrame(sheet_two_list, columns=sheet_two_col_list)
-    with pd.ExcelWriter(excel_name) as writer:
+    df = pandas.DataFrame(sheet_one_list, columns=sheet_one_col_list)
+    df2 = pandas.DataFrame(sheet_two_list, columns=sheet_two_col_list)
+    with pandas.ExcelWriter(excel_name) as writer:
         df.to_excel(writer, index=False)
         df2.to_excel(writer, sheet_name="sheet2", index=False)
+
+    df3 = pandas.DataFrame(import_sheet_list, columns=sheet_one_col_list)
+    with pandas.ExcelWriter(import_site_name) as writer:
+        df3.to_excel(writer, index=False)
+
     log.info('统计结束...')
+
+
+@click.command()
+@click.option("-w", "--whole", default="", help=u"全量统计")
+def main(whole):
+    log.info("开始启动统计..")
+
+    cur_time = datetime.datetime.now().strftime('%Y-%m-%d_%H_%M_%S')
+    statis(False, cur_time, 0)
+    statis(False, cur_time, 2)
+    statis(False, cur_time, 6)
+    if whole == 'all':
+        statis(True, cur_time)
 
 
 if __name__ == "__main__":
