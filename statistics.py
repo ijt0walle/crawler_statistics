@@ -13,7 +13,8 @@ import click
 import pandas as pd
 import pymongo
 
-from config import MONGO_CONFIG, CHECK_DATES, CHECK_TOPIC, MYSQL_CONFIG, TABLE_NAME_LIST, TOPIC_NAME_LIST
+from config import MONGO_CONFIG, CHECK_DATES, CHECK_TOPIC, MYSQL_CONFIG, TABLE_NAME_LIST, TOPIC_NAME_LIST, \
+    FILTER_TABLE_LIST
 from logger import Logger
 
 log = Logger("statistics.log").get_logger()
@@ -193,7 +194,7 @@ def main(whole):
         sheet_one_col_list.append(u'招行站点')
 
         sheet_two_col_list.append(u"全量统计")
-        excel_name = "all_utime_sites_statistics.xls"
+        excel_name = "[{}]all_utime_sites_statistics.xls".format(datetime.datetime.now().strftime('%Y-%m-%d_%H_%M_%S'))
         log.info("当前为全量统计...")
 
     # 获得所有站点信息
@@ -203,6 +204,10 @@ def main(whole):
     site_statistics_dict = get_all_site_statistics()
 
     for index, table_name in enumerate(table_name_list):
+
+        if table_name in FILTER_TABLE_LIST:
+            log.info("当前topic不进行统计: {}".format(table_name))
+            continue
 
         count = 0
         log.info("当前统计的topic为: {}".format(table_name))

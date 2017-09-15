@@ -58,6 +58,8 @@ TOPIC_NAME_LIST = [u"工商信息、变更信息", u"欠税信息", u"行政处�
                    u"投资基金-投资事件", u"投资基金-退出事件", u"投资基金-并购事件", u"投资基金-上市事件", u"土地转让",
                    u"房地产-新房（链家）深圳市", u"房地产-二手在售房源深圳市", u"房地产-小区（链家）深圳市", u"土地基本信息", u"土地招拍挂"]
 
+FILTER_TABLE_LIST = ["enterprise_data_gov"]
+
 CHECK_TOPIC = {
     "enterprise_data_gov": {"description": "工商信息变更", "tag": u"离线抓取", "sites": [
         {"site": "bj.gsxt.gov.cn"}, {"site": "tj.gsxt.gov.cn"}, {"site": "he.gsxt.gov.cn"}, {"site": "sx.gsxt.gov.cn"},
