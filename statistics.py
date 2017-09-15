@@ -261,10 +261,11 @@ def main(whole):
             # 3 官方数量
             # 4 数据占比
             # 如果站点有官方统计数目则进行占比计算
-            if _site in site_statistics_dict:
-                item[sheet_one_col_list[3]] = site_statistics_dict[_site]
-                if site_statistics_dict[_site] > 0:
-                    item[sheet_one_col_list[4]] = site_count / (site_statistics_dict[_site] * 1.0)
+            row_key = topic_name_list[index] + table_name + _site
+            if row_key in site_statistics_dict:
+                item[sheet_one_col_list[3]] = site_statistics_dict[row_key]
+                if site_statistics_dict[row_key] > 0:
+                    item[sheet_one_col_list[4]] = site_count / (site_statistics_dict[row_key] * 1.0)
                 else:
                     item[sheet_one_col_list[4]] = 1.0
             else:
