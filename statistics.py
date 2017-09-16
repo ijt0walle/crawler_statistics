@@ -42,14 +42,6 @@ def get_delta_date(delta):
     return before_date.strftime("%Y-%m-%d")
 
 
-sheet_one_col_list = [u"主题", u"站点"]
-sheet_two_col_list = [u"主题"]
-
-# 合并
-table_name_list = TABLE_NAME_LIST
-topic_name_list = TOPIC_NAME_LIST
-
-
 # 根据topic获取topic_id
 def get_topic_id(topic):
     topic_id = 0
@@ -91,7 +83,7 @@ def get_sites_by_topic_id(topic_id):
 
 
 # 获得配置文件中所有站点信息
-def get_all_site_info():
+def get_all_site_info(table_name_list):
     all_site_dict = {}
 
     total_site = 0
@@ -171,6 +163,13 @@ def get_all_site_statistics():
 
 # 统计
 def statis(is_all, cur_time, days=CHECK_DATES):
+    sheet_one_col_list = [u"主题", u"站点"]
+    sheet_two_col_list = [u"主题"]
+
+    # 合并
+    table_name_list = TABLE_NAME_LIST
+    topic_name_list = TOPIC_NAME_LIST
+
     sheet_one_list = []
     import_sheet_list = []
     sheet_two_list = []
@@ -209,7 +208,7 @@ def statis(is_all, cur_time, days=CHECK_DATES):
         log.info("当前为全量统计...")
 
     # 获得所有站点信息
-    all_site_dict = get_all_site_info()
+    all_site_dict = get_all_site_info(table_name_list)
 
     # 获取站点官方数量
     site_statistics_dict = get_all_site_statistics()
