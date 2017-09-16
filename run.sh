@@ -48,10 +48,11 @@ restart() {
 
 status() {
     pid=`ps -ef | grep python | grep -v grep | grep ${project} | awk '{print $2}'`
-    if [ -z ${pid} ]; then
+    if [ -z "${pid}" ]; then
         return 0
     fi
     echo "${pid}"
+    return 1
 }
 
 case "$1" in
