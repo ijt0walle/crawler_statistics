@@ -25,13 +25,13 @@ all() {
 }
 
 stop() {
-	ret=`status`
-	if [ -z "${ret}" ]; then
+	status
+	if [ $? -eq 0 ]; then
 	    echo "${project} not running.."
 	    return 1
 	fi
 
-	kill -9 ${ret}
+	ps -ef | grep python | grep -v grep | grep ${project} | awk '{print $2}' | xargs kill -9
 
 	status
 	[ $? -eq 0 ] && echo "${project} stop success..." && return 1
@@ -52,7 +52,6 @@ status() {
         return 0
     fi
     echo "${pid}"
-	return ${pid}
 }
 
 case "$1" in
