@@ -181,14 +181,14 @@ def statis(is_all, cur_time, days=CHECK_DATES):
     end_time = end_date + " 23:59:59"
 
     if is_all is False:
-        sheet_one_col_list.append(start_time + u"至" + end_time)
+        sheet_one_col_list.append(start_date + u"至" + start_date)
 
         sheet_one_col_list.append(u"官方数量")
         sheet_one_col_list.append(u"抓取占比")
 
         sheet_one_col_list.append(u'招行站点')
 
-        sheet_two_col_list.append(start_time + u"至" + end_time)
+        sheet_two_col_list.append(start_date + u"至" + start_date)
         import_site_name = "[{}]_{}_{}_import_sites.xls".format(
             cur_time, start_date, end_date)
         excel_name = "[{}]_{}_{}_utime_sites.xls".format(
