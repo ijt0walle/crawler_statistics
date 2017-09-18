@@ -316,6 +316,7 @@ acquirer_eventzdb.pedaily.cn
 listing_eventsipo.pedata.cn
 land_project_sellingland.fang.com
 loupan_lianjiasz.lianjia.com
+loupan_lianjiasz.fang.lianjia.com
 ershoufang_lianjiasz.lianjia.com
 xiaoqu_lianjiasz.lianjia.com
 land_selling_auctionland.fang.com
