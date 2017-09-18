@@ -325,9 +325,9 @@ def main(whole):
     log.info("开始启动统计..")
 
     cur_time = datetime.datetime.now().strftime('%Y-%m-%d_%H_%M_%S')
-    statis(False, cur_time, 0)
-    statis(False, cur_time, 2)
-    statis(False, cur_time, 6)
+    statis(False, cur_time, 1)
+    statis(False, cur_time, 3)
+    statis(False, cur_time, 7)
     if whole == 'all':
         statis(True, cur_time)
 
