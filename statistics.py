@@ -237,14 +237,16 @@ def statis(is_all, cur_time, days=CHECK_DATES):
         site_count_map = {}
         for item in cursor:
             count += 1
-            if '_src' in item and len(item["_src"]) > 0 and "site" in item["_src"][0]:
+            if '_src' in item and \
+                    isinstance(item['_src'], list) and \
+                            len(item["_src"]) > 0:
 
                 src_set = set()
                 _src_list = item['_src']
-                for src in _src_list:
-                    if 'site' not in src:
+                for src_item in _src_list:
+                    if 'site' not in src_item:
                         continue
-                    src_set.add(src['site'].strip())
+                    src_set.add(src_item['site'].strip())
 
                 # 需统计全部站点抓取
                 for key in src_set:
@@ -261,9 +263,9 @@ def statis(is_all, cur_time, days=CHECK_DATES):
         cursor.close()
 
         # 添加招行站点
-        site_set = all_site_dict.get(table_name)
-        assert site_set is not None
-        for key in site_set:
+        zhaohang_site_set = all_site_dict.get(table_name)
+        assert zhaohang_site_set is not None
+        for key in zhaohang_site_set:
             if key in site_count_map:
                 continue
             site_count_map[key] = 0
@@ -290,7 +292,7 @@ def statis(is_all, cur_time, days=CHECK_DATES):
                 item[sheet_one_col_list[3]] = 0
                 item[sheet_one_col_list[4]] = 1.0
 
-            if _site in site_set:
+            if _site in zhaohang_site_set:
                 item[sheet_one_col_list[-1]] = u'是'
             else:
                 item[sheet_one_col_list[-1]] = u'------'
