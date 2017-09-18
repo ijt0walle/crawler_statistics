@@ -453,7 +453,10 @@ CHECK_TOPIC = {
     "neighborhood_anjuke": {"description": "房地产-小区-安居客", "sites": [
         {'name': '安居客', 'site': 'www.anjuke.com', "ignore": True, "tag": u"站点反爬"}]},
 
-    "loupan_lianjia": {"description": "房地产-楼盘-链家", "sites": [{'name': '链家楼盘', 'site': 'sz.lianjia.com'}]},
+    "loupan_lianjia": {"description": "房地产-楼盘-链家", "sites": [
+        {'name': '链家楼盘', 'site': 'sz.lianjia.com'},
+        {'name': '链家楼盘', 'site': 'sz.fang.lianjia.com'}
+    ]},
     "loupan_anjuke": {"description": "房地产-楼盘-安居客", "sites": [
         {'name': '安居客', 'site': 'sz.fang.anjuke.com', "ignore": True, "tag": u"站点反爬"}]},
     "loupan_fangdd": {"description": "房地产-楼盘-房多多", "sites": [{'name': '房多多', 'site': 'xf.fangdd.com'}]},
